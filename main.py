@@ -1,19 +1,14 @@
+# MCP4725 library: https://github.com/wayoda/micropython-mcp4725
 from machine import Pin, SPI
 import gc9a01py as gc9a01
 from machine import I2C
 import time
-import dht
-from hdc1080 import HDC1080
+import mcp4725
+from mcp4725 import MCP4725, BUS_ADDRESS
 
-i2c = I2C(0)
-hdc = HDC1080(i2c)
+i2c = I2C(id=0, scl=5, sda=4, freq=400_000)
 
-    
 initialtime= time.ticks_ms() #https://docs.micropython.org/en/latest/library/time.html
-hdc.config(humid_res=14, temp_res=14, mode=0, heater=0)
-
-if hdc.check():
-    print(f"Found HDC1080 with serial number {hdc.serial_number()}")
     
 def main():
     
@@ -28,7 +23,7 @@ def main():
     
     tft.fill(gc9a01.GREEN)
     initialtime= time.ticks_ms() #https://docs.micropython.org/en/latest/library/time.html
-    sensor = dht.DHT11(Pin(15))
+    dac=mcp4725.MCP4725(i2c,mcp4725.BUS_ADDRESS[0])
     
     # from fonts import vga1_8x8 as font
     from fonts import vga2_8x8 as font1
@@ -49,17 +44,13 @@ def main():
             if time.ticks_diff(time.ticks_ms(), initialtime) > 3000: # this IF will be true every 2000 ms
                 initialtime= time.ticks_ms() #update with the "current" time
 
-                print(f"{hdc.temperature()} C, {hdc.humidity()} RH")
-                temp1= str(round(hdc.temperature(),2))
-                hum1= str(round(hdc.humidity(),2))
-                tft.text(font3, "HDC1080", 70, 40, gc9a01.BLACK, gc9a01.GREEN)
-                tft.text(font3, "sensor", 70, 60, gc9a01.BLACK, gc9a01.GREEN)
-                tft.text(font, "Temperature:", 30, 80, gc9a01.WHITE, gc9a01.GREEN)
-                tft.text(font, temp1, 70, 120, gc9a01.WHITE, gc9a01.GREEN)
-                tft.text(font, " C", 150, 120, gc9a01.WHITE, gc9a01.GREEN)
-                tft.text(font2, "Humidity:", 80, 160, gc9a01.BLACK, gc9a01.GREEN)
-                tft.text(font2, hum1, 100, 180, gc9a01.BLACK, gc9a01.GREEN)
-                tft.text(font2, " %", 140, 180, gc9a01.BLACK, gc9a01.GREEN)
+                dac.write(1200)
+                #dac.read()
+                tft.text(font3, "MCP4725", 70, 40, gc9a01.BLACK, gc9a01.GREEN)
+                tft.text(font3, "D/A", 70, 60, gc9a01.BLACK, gc9a01.GREEN)
+                tft.text(font, "Value:", 30, 80, gc9a01.WHITE, gc9a01.GREEN)
+                #tft.text(font, temp1, 70, 120, gc9a01.WHITE, gc9a01.GREEN)
+                
 
         except OSError as e:
             print('Failed reception')
